@@ -1,0 +1,9 @@
+{
+  "source": "local Stockfish distribution",
+  "architecture": "ARM64 NEON",
+  "ndk": "r27d",
+  "api": 34,
+  "page_alignment": 16384,
+  "binary_sha256": "6893a1e18ba4f49ef122aed3b8404816319420626bb80cb9e9b4e9e6d3853a4f",
+  "network": "nn-1a298aa575a0.nnue"
+}

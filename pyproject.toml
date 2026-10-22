@@ -1,0 +1,25 @@
+[project]
+name = "chesslab"
+version = "0.1.0"
+description = "Local/test-board chess vision and Stockfish automation"
+requires-python = ">=3.11"
+dependencies = [
+  "python-chess>=1.999",
+  "opencv-python>=4.10",
+  "numpy>=2.0",
+  "Pillow>=10.0",
+  "cryptography>=50,<51",
+  "httpx>=0.28,<0.29",
+]
+
+[project.scripts]
+chesslab = "chesslab.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

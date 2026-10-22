@@ -1,0 +1,6 @@
+.gradle/
+**/build/
+local.properties
+*.jks
+app/src/main/jniLibs/
+app/src/main/assets/engine-source.zip

@@ -1,0 +1,86 @@
+name: chesslab-license
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: chesslab
+      POSTGRES_USER: chesslab_migrator
+      POSTGRES_PASSWORD: ${CHESSLAB_DB_PASSWORD:?Isi CHESSLAB_DB_PASSWORD}
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U chesslab_migrator -d chesslab']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  migrate:
+    build: ./license-server
+    environment: &server_env
+      CHESSLAB_DATABASE_URL: postgresql+psycopg://chesslab_migrator:${CHESSLAB_DB_PASSWORD}@db/chesslab
+      CHESSLAB_KEY_PEPPER: ${CHESSLAB_KEY_PEPPER:?Isi CHESSLAB_KEY_PEPPER}
+      CHESSLAB_SIGNING_KEY_PATH: /run/secrets/license_signing_key
+      CHESSLAB_SIGNING_KEY_ID: ${CHESSLAB_SIGNING_KEY_ID:-ed25519-2026-01}
+      CHESSLAB_PUBLIC_ORIGIN: ${CHESSLAB_PUBLIC_ORIGIN:-http://localhost:8080}
+      CHESSLAB_SECURE_COOKIES: ${CHESSLAB_SECURE_COOKIES:-true}
+      CHESSLAB_RUNTIME_PASSWORD: ${CHESSLAB_RUNTIME_PASSWORD:?Isi CHESSLAB_RUNTIME_PASSWORD}
+      CHESSLAB_TRUSTED_PROXY_CIDRS: '["172.16.0.0/12"]'
+    secrets: [license_signing_key]
+    depends_on:
+      db: {condition: service_healthy}
+    command: [python, -m, app.migrate]
+    restart: 'no'
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+  api:
+    build: ./license-server
+    environment:
+      <<: *server_env
+      CHESSLAB_DATABASE_URL: postgresql+psycopg://chesslab_api:${CHESSLAB_RUNTIME_PASSWORD}@db/chesslab
+    secrets: [license_signing_key]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+  dashboard:
+    build: ./admin-dashboard
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+  proxy:
+    image: caddy:2-alpine
+    environment:
+      SITE_ADDRESS: ${CHESSLAB_SITE_ADDRESS:-http://:8080}
+    ports: [127.0.0.1:8080:8080]
+    volumes: [./deploy/Caddyfile:/etc/caddy/Caddyfile:ro, caddy_data:/data, caddy_config:/config]
+    depends_on:
+      dashboard: {condition: service_healthy}
+    healthcheck:
+      test: [CMD-SHELL, 'wget -q -O /dev/null http://127.0.0.1:8080/healthz']
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+secrets:
+  license_signing_key:
+    file: ${CHESSLAB_SIGNING_KEY_FILE:-./secrets/license-private.pem}
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

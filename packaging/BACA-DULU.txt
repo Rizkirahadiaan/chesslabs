@@ -1,0 +1,41 @@
+CHESSLAB COACH PORTABLE - WINDOWS 64-BIT
+
+1. Letakkan ChessLab-Coach.exe di folder yang bisa ditulis (Desktop, folder biasa, atau USB).
+2. Buka ChessLab-Coach.exe. Panel Coach langsung terbuka tanpa Python atau instalasi.
+3. Aktifkan kunci lisensi melalui internet. Masa berlaku dimulai pada aktivasi pertama.
+4. Tampilkan papan latihan. Coach mencari papan otomatis memakai template bawaan.
+   Untuk tema baru, gunakan tombol Deteksi & pelajari sekali.
+
+Pilih Bayangan atau Titik pada bagian Tampilan rekomendasi.
+Bayangan: petak merah samar untuk asal, lebih kuat untuk tujuan.
+Titik: lingkaran kosong untuk asal, titik penuh untuk tujuan.
+Ukuran titik dan kejelasan bisa diatur; pilihan tersimpan otomatis.
+Ctrl+Alt+H menampilkan/menyembunyikan penanda. Panel boleh diminimalkan.
+
+Pilih Kecerdasan: Human untuk variasi langkah kuat dengan sedikit penurunan kekuatan.
+Toleransi evaluasi hingga 0,35 pion; saat skak/endgame sederhana hingga 0,15 pion.
+Pilihan tersimpan otomatis. Gaya setara ON/OFF dinonaktifkan selama Human dipilih.
+
+Gaya setara ON/OFF tersedia di bawah Kecerdasan dan tersimpan otomatis.
+Gunakan Maksimal untuk kekuatan penuh. ON mengutamakan langkah sederhana di
+antara kandidat dengan evaluasi terbaik yang setara; analisis bisa lebih lama
+(hingga sekitar 4 kali anggaran biasa). Kesamaan evaluasi bukan jaminan Elo sama.
+Pengaturan lama memakai OFF sampai Anda mengaktifkannya di menu.
+
+Untuk memperbarui versi lama, tutup aplikasinya lalu ganti file EXE saja.
+Pertahankan folder ChessLab-data agar pengaturan dan template lama tetap terbawa.
+
+Saat pertama dibuka, EXE menyiapkan folder ChessLab-data di sampingnya.
+Folder ini menyimpan config.json, Stockfish, template, pemberitahuan dependensi, dan runtime/PGN.
+Cache aktivasi terpisah di %LOCALAPPDATA%\ChessLab\licensing, dilindungi DPAPI pengguna Windows.
+Cache tersebut terikat perangkat. Perpindahan PC memerlukan reset perangkat oleh admin.
+Validasi online setiap 30 menit; offline maksimal 12 jam dan tidak melampaui akhir langganan.
+Lisensi kedaluwarsa, dicabut, atau ditangguhkan menghentikan akses analisis premium.
+Gunakan tombol Status / perpanjangan untuk petunjuk pembayaran manual dan pembaruan status.
+Jika ingin mempertahankan pengaturan saat pindah komputer, salin EXE beserta
+folder ChessLab-data. EXE saja juga bisa dipindahkan; pengaturan bawaan akan dibuat ulang.
+Pembukaan awal membutuhkan beberapa saat karena semua komponen dikemas dalam satu EXE.
+Tutup panel Coach untuk menghentikan aplikasi.
+
+Jika ada masalah, lihat ChessLab-data/runtime/portable.log.
+Paket memerlukan Windows 64-bit dengan desktop aktif.

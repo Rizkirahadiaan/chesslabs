@@ -1,0 +1,1 @@
+"""Layanan lisensi ChessLab."""

@@ -1,0 +1,22 @@
+{$SITE_ADDRESS:http://:8080} {
+    request_body {
+        max_size 32KB
+    }
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy no-referrer
+        -Server
+    }
+    handle /api/* {
+        reverse_proxy api:8000 {
+            header_up X-Forwarded-For {remote_host}
+        }
+    }
+    handle /healthz {
+        reverse_proxy api:8000
+    }
+    handle {
+        reverse_proxy dashboard:3000
+    }
+}

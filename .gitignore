@@ -1,0 +1,36 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+.env
+secrets/
+licensing-public.json
+admin-dashboard/node_modules/
+admin-dashboard/.next/
+work/
+*.db
+*.db-journal
+*.pem
+*.bin
+
+# Konfigurasi pengguna dan hasil eksekusi lokal
+/config.json
+/runtime/
+/outputs/
+/templates/coach-*/
+
+# Cache dan laporan frontend yang dibuat otomatis
+*.tsbuildinfo
+admin-dashboard/test-results/
+admin-dashboard/playwright-report/
+admin-dashboard/.turbo/
+admin-dashboard/next-env.d.ts
+
+# Kredensial, kunci privat, dan arsip lokal
+.env.*
+!.env.example
+*.key
+*.pfx
+*.p12
+*.jks
+*.log

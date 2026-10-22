@@ -1,0 +1,6 @@
+{
+  "api_url": "http://localhost:8080",
+  "product": "chesslab-pc",
+  "public_keys": {},
+  "renewal_instructions": "Hubungi penjual dengan ID lisensi dan bukti pembayaran. Harga dan paket mengikuti konfigurasi server. Setelah pembayaran dikonfirmasi, tekan Perbarui status lisensi."
+}

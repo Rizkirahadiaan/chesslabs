@@ -1,0 +1,24 @@
+{
+  "stockfish_path": "C:\\tools\\stockfish\\stockfish-windows-x86-64-avx2.exe",
+  "allowed_window_titles": ["ChessLab Local Board", "ChessLab Test Board"],
+  "templates_dir": "templates",
+  "runtime_dir": "runtime",
+  "marker_size": 5,
+  "overlay_style": "dots",
+  "marker_opacity": 0.45,
+  "player_colour": "auto",
+  "orientation_mode": "auto",
+  "auto_start": true,
+  "engine_strength": "Maksimal",
+  "human_style": false,
+  "min_template_score": 0.74,
+  "stable_frames": 2,
+  "poll_interval_seconds": 0.35,
+  "board": {
+    "left": 100,
+    "top": 100,
+    "right": 900,
+    "bottom": 900,
+    "orientation": "white"
+  }
+}
