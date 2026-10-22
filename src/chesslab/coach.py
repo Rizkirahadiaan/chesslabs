@@ -206,6 +206,21 @@ class Coach:
         if not self.closed and not self.running and self.generation == 0:
             self.start(automatic=True)
 
+    def _license_changed(self, entitled, busy, message):
+        """Aktivasi pertama melanjutkan autostart yang sebelumnya ditolak lisensi."""
+        was_entitled = getattr(self, "_license_was_entitled", False)
+        self._license_was_entitled = entitled
+        if not entitled:
+            if self.running:
+                self.pause()
+                self.advice = None
+                self.variation.set("")
+                self.suggestion.set("Lisensi tidak aktif")
+            self.status.set(message)
+        elif not was_entitled and self.settings.auto_start:
+            # Guard generation di _autostart mempertahankan Jeda/Persiapan manual.
+            self.root.after(0, self._autostart)
+
     def _hotkey_tick(self):
         if self.closed:
             return
@@ -559,6 +574,7 @@ class Coach:
             if foreground() != target or rect(target) != target_rect:
                 raise ValueError("Jendela berubah selama pencarian")
         except Exception as exc:
+            self.suggestion.set("Menunggu papan dan template yang cocok")
             self.status.set(f"Menunggu papan yang dikenali: {exc}")
             self.root.after(1000, lambda: self._auto_find(token))
             return
@@ -703,7 +719,11 @@ class Coach:
                                right=box.right+target_rect[0], top=box.top+target_rect[1],
                                bottom=box.bottom+target_rect[1])
             raise ValueError("Orientasi tengah match belum pasti. Pilih Di bawah: white/black, lalu Baca posisi sekarang.")
-        raise ValueError("Papan ditemukan tetapi posisi belum pasti. Tunggu animasi; tema baru perlu dipelajari.")
+        raise ValueError(
+            "Papan ditemukan, tetapi posisi belum cocok dengan template/FEN. "
+            "Untuk tema atau ukuran baru: pilih Di bawah white/black sesuai papan, "
+            "sesuaikan FEN (Posisi awal untuk papan awal), lalu Deteksi & pelajari (3 dtk). "
+            "Aktifkan jendela papan selama hitung mundur, kemudian klik Mulai / lanjut.")
 
     def _scan_result(self, token, target_rect, old_box, future):
         if self.closed or not self.running or token != self.generation or future is not self.scan_future:

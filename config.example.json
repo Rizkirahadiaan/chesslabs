@@ -1,5 +1,5 @@
 {
-  "stockfish_path": "C:\\tools\\stockfish\\stockfish-windows-x86-64-avx2.exe",
+  "stockfish_path": "engine/stockfish.exe",
   "allowed_window_titles": ["ChessLab Local Board", "ChessLab Test Board"],
   "templates_dir": "templates",
   "runtime_dir": "runtime",

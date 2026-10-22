@@ -5,6 +5,10 @@
 Implementasi lisensi komersial, backend PostgreSQL/FastAPI, dashboard admin, deployment,
 serta panduan build Windows tersedia di [panduan platform lisensi](docs/lisensi/README.md).
 Hasil uji aktual dan syarat peluncuran dicatat di [laporan implementasi](docs/lisensi/LAPORAN-IMPLEMENTASI.md).
+Pemulihan build dari clone baru, setup Python 3.13, provisioning aset, audit lisensi dan
+validasi EXE dijelaskan di [panduan build Windows](docs/windows-build-guide.md).
+Otomasi ZIP Windows di GitHub Releases serta image API/dashboard di GitHub Packages
+tersedia dalam [panduan rilis GitHub](docs/github-release-guide.md).
 Versi sumber dan build berlisensi baru memerlukan aktivasi untuk analisis premium.
 EXE portable lama tidak ditimpa. Build baru menggunakan direktori `outputs/licensed`.
 Harga dan paket ditentukan server; aktivasi awal membutuhkan koneksi internet.
@@ -19,7 +23,7 @@ APK belum diuji langsung pada Samsung A34; minimum Android 14, target API 36.
 
 ## EXE portable: langsung buka tanpa instalasi
 
-Hasil build tersedia di `outputs/portable/ChessLab-Coach.exe`. Buka EXE tersebut
+Hasil build berlisensi tersedia di `outputs/licensed/ChessLab-Coach.exe`. Buka EXE tersebut
 untuk langsung menjalankan Coach tanpa terminal, instalasi Python, atau Stockfish
 terpisah. Windows 64-bit diperlukan. Pembukaan awal membutuhkan beberapa saat.
 
@@ -149,14 +153,21 @@ diizinkan**.
 Di PowerShell dari folder proyek:
 
 ```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -e .
-Copy-Item config.example.json config.json
+.\scripts\setup-windows.ps1
+# Jika setup berhenti karena config/aset belum tersedia, provision Stockfish dan
+# licensing-public.json terlebih dahulu, lalu:
+.\scripts\init-chesslab-config.ps1 -StockfishPath 'C:\tools\stockfish\stockfish-windows-x86-64-universal.exe'
+.\scripts\setup-windows.ps1
+.\.venv\Scripts\python.exe -E -s scripts\preflight_build.py
+.\scripts\build-windows.ps1
 ```
 
-Unduh/extract Stockfish 19 resmi, lalu isi `stockfish_path` di `config.json`, misalnya
-`C:\\tools\\stockfish\\stockfish-windows-x86-64-avx2.exe`.
+Gunakan CPython 3.13 x64 standar dengan pip dan Tcl/Tk. Unduh/extract distribusi
+Stockfish 19 resmi lengkap dengan `Copying.txt`, `AUTHORS`, `README.md` dan `src/`.
+64 PNG pada 13 kelas template tersedia di Git. `licensing-public.json` harus
+dipasok pengelola server dengan kunci publik yang benar; contoh berisi kunci kosong.
+Setup awal memasang `.venv`, lalu berhenti jika konfigurasi/aset belum diprovision.
+Instruksi lengkap dan diagnosis kegagalan ada di [panduan build](docs/windows-build-guide.md).
 
 `opencv-python` dan kontrol Windows bawaan membutuhkan desktop Windows aktif; jalankan dari
 komputer lokal, bukan sesi headless.
@@ -167,15 +178,14 @@ Jika `chesslab` menampilkan `Fatal error in launcher` dengan lokasi Python lama,
 pasang ulang paket dari folder proyek agar launcher dan referensi sumber diperbarui:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install --no-cache-dir --force-reinstall -e .
+.\scripts\setup-windows.ps1
 .\.venv\Scripts\Activate.ps1
 chesslab --config config.json coach
 ```
 
-Pemasangan ulang juga menyesuaikan dependensi biner dengan versi Python di `.venv`.
-Gunakan `python.exe -m pip` seperti di atas karena launcher `pip.exe` juga dapat
-masih menunjuk ke lokasi lama. Jika `.venv\Scripts\python.exe` tidak dapat dijalankan,
-buat ulang virtual environment dengan Python yang terpasang sebelum memasang paket.
+Setup memasang ulang sumber editable checkout aktif dan menyelaraskan dependency
+dengan lock Windows. Jika `.venv\Scripts\python.exe` tidak dapat dijalankan,
+backup/pindahkan `.venv` lalu jalankan setup memakai CPython 3.13 x64 standar.
 
 ## Alur satu kali
 

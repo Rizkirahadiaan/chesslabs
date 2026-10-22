@@ -6,15 +6,31 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import time
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def relocate(source, destination, timeout=5):
+    """Windows dapat menahan handle EXE sebentar setelah proses berakhir."""
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            source.rename(destination)
+            return
+        except PermissionError:
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(.2)
 
 
 def run_check(folder, report):
     environment = os.environ.copy()
     environment.pop("PYTHONPATH", None)
     environment.pop("PYTHONHOME", None)
+    environment.pop("CHESSLAB_LICENSE_CONFIG", None)
+    environment["LOCALAPPDATA"] = str(report.parent / (report.stem + "-appdata"))
     environment["PATH"] = str(Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32")
     result = subprocess.run([str(folder / "ChessLab-Coach.exe"), "--self-test", str(report)],
                             cwd=ROOT / "work", env=environment, timeout=90, check=False)
@@ -27,6 +43,8 @@ def run_check(folder, report):
         raise RuntimeError("EXE belum memuat mode gaya manusiawi ON/OFF")
     if not data.get("human_level_move"):
         raise RuntimeError("EXE belum memuat level Human")
+    if not data.get("activation_window") or not data.get("unactivated_premium_blocked"):
+        raise RuntimeError("Antarmuka aktivasi/penolakan premium belum terverifikasi")
     return data
 
 
@@ -48,7 +66,7 @@ def main():
     raw["human_style"] = False
     config.write_text(json.dumps(raw, indent=2), encoding="utf-8")
     moved = run / "USB pindah caf\u00e9"
-    first.rename(moved)
+    relocate(first, moved)
     relocated = run_check(moved, run / "relocated.json")
     assert json.loads((moved / "ChessLab-data/config.json").read_text())["engine_strength"] == "Human"
     assert json.loads((moved / "ChessLab-data/config.json").read_text())["overlay_style"] == "shadow"

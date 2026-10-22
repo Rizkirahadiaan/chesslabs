@@ -115,13 +115,7 @@ def install_license_ui(coach, body):
         return
     coach.license_manager = manager
 
-    def changed(entitled, busy, message):
-        if not entitled and coach.running:
-            coach.pause(); coach.advice = None; coach.variation.set("")
-            coach.suggestion.set("Lisensi tidak aktif")
-        if not entitled: coach.status.set(message)
-
-    coach.license_controller = LicenseStateController(coach.root, manager, changed)
+    coach.license_controller = LicenseStateController(coach.root, manager, coach._license_changed)
     panel = LicenseStatusPanel(body, manager, coach.license_controller)
     panel.pack(fill="x", pady=6)
     coach.license_panel = panel

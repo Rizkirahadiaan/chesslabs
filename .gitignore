@@ -1,4 +1,8 @@
 .venv/
+.tools/
+/build/
+/dist/
+/*.spec
 __pycache__/
 .pytest_cache/
 *.egg-info/
@@ -16,6 +20,7 @@ work/
 # Konfigurasi pengguna dan hasil eksekusi lokal
 /config.json
 /runtime/
+/engine/
 /outputs/
 /templates/coach-*/
 
