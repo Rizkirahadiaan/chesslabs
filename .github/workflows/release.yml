@@ -1,0 +1,149 @@
+name: Rilis Windows dan GitHub Packages
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    name: Build dan audit Windows
+    runs-on: windows-2025
+    timeout-minutes: 35
+    outputs:
+      version: ${{ steps.archive.outputs.version }}
+      prerelease: ${{ steps.archive.outputs.prerelease }}
+    env:
+      CHESSLAB_LICENSE_PUBLIC_JSON: ${{ vars.CHESSLAB_LICENSE_PUBLIC_JSON }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13.17'
+          architecture: x64
+      - name: Pasang dependency build
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          ./.venv/Scripts/python.exe -E -s -m pip --isolated install -r requirements-build.txt
+          ./.venv/Scripts/python.exe -E -s -m pip --isolated install --no-deps --no-build-isolation -e .
+      - name: Provision aset resmi dan konfigurasi publik
+        shell: pwsh
+        run: ./.venv/Scripts/python.exe -E -s scripts/provision_release_assets.py --github-env
+      - name: Setup dan preflight
+        shell: pwsh
+        run: ./scripts/setup-windows.ps1
+      - name: Jalankan tes termasuk engine nyata
+        shell: pwsh
+        run: ./.venv/Scripts/python.exe -E -s -m pytest -q -ra --junitxml=work/tests-release.xml
+      - name: Build EXE dan smoke test wajib
+        shell: pwsh
+        run: ./scripts/build-windows.ps1
+      - name: Siapkan ZIP dan checksum
+        id: archive
+        shell: pwsh
+        run: |
+          ./.venv/Scripts/python.exe -E -s scripts/prepare_release.py --tag $env:GITHUB_REF_NAME
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "version=$($env:GITHUB_REF_NAME.Substring(1))" >> $env:GITHUB_OUTPUT
+          "prerelease=$($env:GITHUB_REF_NAME.Contains('-').ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-release
+          path: |
+            outputs/releases/*.zip
+            outputs/releases/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: hasil-tes-rilis
+          path: |
+            work/tests-release.xml
+            work/portable-verification/result.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  packages:
+    name: Publikasikan ${{ matrix.component }}
+    needs: windows
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - component: license-api
+            context: license-server
+          - component: admin-dashboard
+            context: admin-dashboard
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Tentukan nama image huruf kecil
+        id: image
+        env:
+          REPOSITORY: ${{ github.repository }}
+          COMPONENT: ${{ matrix.component }}
+        run: echo "name=ghcr.io/${REPOSITORY,,}-${COMPONENT}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./${{ matrix.context }}
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ${{ steps.image.outputs.name }}:${{ needs.windows.outputs.version }}
+            ${{ steps.image.outputs.name }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ needs.windows.outputs.version }}
+            org.opencontainers.image.title=ChessLab ${{ matrix.component }}
+          cache-from: type=gha,scope=${{ matrix.component }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.component }}
+
+  release:
+    name: Terbitkan GitHub Release
+    needs: [windows, packages]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ github.ref_name }}
+      PRERELEASE: ${{ needs.windows.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: windows-release
+          path: release-assets
+      - name: Buat draft, unggah aset, kemudian terbitkan
+        shell: bash
+        run: |
+          set -euo pipefail
+          notes="docs/releases/${TAG}.md"
+          test -f "$notes"
+          if gh release view "$TAG" --json isDraft --jq '.isDraft' > existing-release.txt 2>/dev/null; then
+            test "$(cat existing-release.txt)" = true || { echo 'Rilis sudah terbit; tidak ditimpa.'; exit 1; }
+          else
+            gh release create "$TAG" --verify-tag --draft --title "ChessLab PC ${TAG}" --notes-file "$notes"
+          fi
+          gh release upload "$TAG" release-assets/* --clobber
+          gh release edit "$TAG" --draft=false --prerelease="$PRERELEASE" --latest=false

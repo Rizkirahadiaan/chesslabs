@@ -1,1 +1,2 @@
-PyInstaller>=6.16,<7
+# Runtime, build backend, pengujian dan PyInstaller dikunci bersama untuk Windows x64.
+-r requirements-windows.lock

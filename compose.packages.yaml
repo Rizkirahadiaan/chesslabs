@@ -1,0 +1,8 @@
+# Gunakan bersama compose.yaml dan .env lokal; tidak membuat deployment otomatis.
+services:
+  migrate:
+    image: ${CHESSLAB_IMAGE_PREFIX:-ghcr.io/rizkirahadiaan/chesslabs}-license-api:${CHESSLAB_IMAGE_TAG:?Isi CHESSLAB_IMAGE_TAG dengan versi rilis}
+  api:
+    image: ${CHESSLAB_IMAGE_PREFIX:-ghcr.io/rizkirahadiaan/chesslabs}-license-api:${CHESSLAB_IMAGE_TAG:?Isi CHESSLAB_IMAGE_TAG dengan versi rilis}
+  dashboard:
+    image: ${CHESSLAB_IMAGE_PREFIX:-ghcr.io/rizkirahadiaan/chesslabs}-admin-dashboard:${CHESSLAB_IMAGE_TAG:?Isi CHESSLAB_IMAGE_TAG dengan versi rilis}

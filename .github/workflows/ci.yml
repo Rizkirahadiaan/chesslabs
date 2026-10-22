@@ -1,0 +1,59 @@
+name: Validasi sumber dan container
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Tes Windows dan Stockfish
+    runs-on: windows-2025
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13.17'
+          architecture: x64
+      - name: Pasang dependency terisolasi
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          ./.venv/Scripts/python.exe -E -s -m pip --isolated install -r requirements-build.txt
+          ./.venv/Scripts/python.exe -E -s -m pip --isolated install --no-deps --no-build-isolation -e .
+          ./.venv/Scripts/python.exe -E -s -m pip check
+      - name: Provision engine resmi terverifikasi
+        shell: pwsh
+        run: ./.venv/Scripts/python.exe -E -s scripts/provision_release_assets.py --stockfish-only --github-env
+      - name: Jalankan seluruh tes desktop
+        shell: pwsh
+        run: ./.venv/Scripts/python.exe -E -s -m pytest -q -ra --junitxml=work/tests-ci.xml
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: hasil-tes-windows
+          path: work/tests-ci.xml
+          if-no-files-found: warn
+          retention-days: 14
+
+  containers:
+    name: Build image ${{ matrix.component }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [license-server, admin-dashboard]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build tanpa publikasi
+        run: docker build --tag chesslab-check:${{ matrix.component }} ./${{ matrix.component }}

@@ -3,6 +3,9 @@ CHESSLAB COACH PORTABLE - WINDOWS 64-BIT
 1. Letakkan ChessLab-Coach.exe di folder yang bisa ditulis (Desktop, folder biasa, atau USB).
 2. Buka ChessLab-Coach.exe. Panel Coach langsung terbuka tanpa Python atau instalasi.
 3. Aktifkan kunci lisensi melalui internet. Masa berlaku dimulai pada aktivasi pertama.
+   Paket UAT lokal menghubungi http://localhost:8080 pada PC yang menjalankan EXE.
+   Jalankan stack Docker lokal pada PC tersebut, lalu gunakan kunci lisensi khusus QA.
+   Kunci publik dan endpoint tertanam di EXE; perubahan target memerlukan build ulang.
 4. Tampilkan papan latihan. Coach mencari papan otomatis memakai template bawaan.
    Untuk tema baru, gunakan tombol Deteksi & pelajari sekali.
 

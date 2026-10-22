@@ -44,7 +44,7 @@ class Settings:
 
 def load_settings(path: str | Path) -> Settings:
     config_path = Path(path).resolve()
-    raw = json.loads(config_path.read_text(encoding="utf-8"))
+    raw = json.loads(config_path.read_text(encoding="utf-8-sig"))
     root = config_path.parent
     board = BoardBox(**raw["board"])
     player_colour = raw.get("player_colour", "auto")

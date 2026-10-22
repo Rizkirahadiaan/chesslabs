@@ -1,15 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-set "BUILD_PYTHON=.venv\Scripts\python.exe"
-if not exist "%BUILD_PYTHON%" (
-  echo Virtual environment belum ada. Ikuti instalasi Windows pada README.md dahulu.
-  pause
-  exit /b 1
-)
-"%BUILD_PYTHON%" -m pip install -r requirements-build.txt
-if errorlevel 1 goto failed
-"%BUILD_PYTHON%" packaging\build_portable.py
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\build-windows.ps1"
 if errorlevel 1 goto failed
 echo.
 echo Selesai: outputs\licensed\ChessLab-Coach.exe

@@ -60,6 +60,20 @@ def self_test(config: Path) -> dict:
         app.pause()  # Do not scan the user's desktop during the packaging check.
         app.root.update_idletasks()
         title = app.root.title()
+        if app.license_manager is None or not hasattr(app, "license_panel"):
+            raise RuntimeError("Konfigurasi publik/antarmuka aktivasi tidak tersedia dalam EXE")
+        if app.license_manager.entitled:
+            raise RuntimeError("Smoke test harus memakai cache QA kosong, tanpa aktivasi pengguna")
+        app.start(automatic=True)
+        if app.running or app._license_allowed():
+            raise RuntimeError("Akses premium terbuka tanpa aktivasi")
+        app.license_panel.open_activation()
+        app.root.update_idletasks()
+        activation = app.license_panel.activation
+        if activation is None or not activation.winfo_exists():
+            raise RuntimeError("Jendela aktivasi tidak dapat dibuka")
+        activation_title = activation.title()
+        activation.destroy()
         human_style_moves = {}
         for enabled in (False, True):
             advice = app.service.submit(chess.Board(), .18, human_style=enabled).result(timeout=10)
@@ -93,7 +107,8 @@ def self_test(config: Path) -> dict:
             "config": str(config), "engine": name, "move": move.uci(),
             "score": score, "template_groups": len(recognizer.templates), "window": title,
             "overlay_styles": styles, "human_style_moves": human_style_moves,
-            "human_level_move": human_advice.move.uci()}
+            "human_level_move": human_advice.move.uci(), "activation_window": activation_title,
+            "unactivated_premium_blocked": True}
 
 
 def main() -> int:
